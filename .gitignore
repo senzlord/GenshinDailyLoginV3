@@ -3,3 +3,5 @@ GetLogin/.env
 AutoDaily/env
 GetLogin/env
 .env
+*.pyc
+*.pyo
