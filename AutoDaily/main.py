@@ -1,7 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException as TE
 
 import time
 import json
@@ -14,6 +17,7 @@ load_dotenv()
 mongo_client_link = os.getenv('MONGO_CLIENT_LINK')
 mongo_client_db = os.getenv('MONGO_CLIENT_DB')
 mongo_client_collection = os.getenv('MONGO_CLIENT_COLLECTION')
+mongo_client_log_collection = os.getenv('MONGO_CLIENT_LOG_COLLECTION')
 mongo_client = pymongo.MongoClient(mongo_client_link)
 
 # Select the database and collection
@@ -30,6 +34,13 @@ if mongo_client_collection in db.list_collection_names():
 else:
     print("The collection doesn't exists.")
     exit()
+    
+if mongo_client_log_collection in db.list_collection_names():
+    log_collection = db[mongo_client_log_collection]
+    print("The log collection exists.")
+else:
+    print("The log collection doesn't exists.")
+    exit()
 
 # Find all documents in the collection
 LoginDocuments = collection.find()
@@ -38,8 +49,6 @@ LoginDocuments = collection.find()
 for Login in LoginDocuments:
     cookies = Login['cookies']
     cookies.sort(key=lambda x: x["domain"], reverse=True)
-    for cookie in cookies:
-        print(cookie['domain'][1:],cookie['expiry'],cookie['httpOnly'],cookie['name'],cookie['path'],cookie['secure'],cookie['value'])
 
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
@@ -63,21 +72,40 @@ for Login in LoginDocuments:
         if cookie['domain'][1:] == 'act.hoyolab.com':
             browser.add_cookie({'domain': cookie['domain'][1:], 'expiry': cookie['expiry'], 'httpOnly': cookie['httpOnly'], 'name': cookie['name'], 'path': cookie['path'], 'secure': cookie['secure'], 'value': cookie['value']})
     browser.refresh()
-    time.sleep(3)
+    
+    print(f"Waiting for 10 seconds before clicking daily check-in content ...")
+    for i in range(10, 0, -1):
+        print(f"\r{i} seconds remaining...", end="")
+        time.sleep(1)
+    print("\n")
 
     ## Do Click for Daily
-    browser.find_element(By.CSS_SELECTOR, "span[class^='components-home-assets-__sign-guide_---guide-close']").click() #Click Button Close
-    AllButton = browser.find_elements(By.CSS_SELECTOR, "div[class^='components-home-assets-__sign-content_---sign-item']") #Get All Daily Button
-    for button in AllButton:
-        try:
-            button.click()
-        except Exception as e:
-            print("An exception occurred: "+e)
-            time.sleep(10)
-            browser.deleteAllCookies()
-            browser.quit()
+    wait = WebDriverWait(browser, 10)
+    
+    modal_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---guide-close]')))
+    modal_close_button.click()
+    
+    click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.start.components-home-assets-__sign-content_---sign-wrapper")))
+    click_daily_sign_button.click()
+    
+    time.sleep(3)
+    # Access GenshinTest database
+    hoyolab_db = mongo_client[mongo_client_db]
+    users_collection = hoyolab_db[mongo_client_collection]
+    try:
+        checker_modal_close_button = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]')))
+        checker_modal_close_button.click()
+        print("Click successful!")
+    except TE:
+        print("Click unsuccessful.")
             
     browser.deleteAllCookies()
     browser.quit()
     
-    time.sleep(30)
+    print(f"Waiting for 10 seconds before clicking going to next account ...")
+    for i in range(10, 0, -1):
+        print(f"\r{i} seconds remaining...", end="")
+        time.sleep(1)
+    print("\n")
+    
+print("All Account Clear")
