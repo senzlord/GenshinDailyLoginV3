@@ -7,10 +7,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException as TE
 
 import time
-import json
 import pymongo
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Get Data From MongoDB
 load_dotenv()
@@ -44,9 +44,12 @@ else:
 
 # Find all documents in the collection
 LoginDocuments = collection.find()
+ListAccountSuccess = []
+ListAccountFail = []
 
 # Print the documents
 for Login in LoginDocuments:
+    username = Login['username']
     cookies = Login['cookies']
     cookies.sort(key=lambda x: x["domain"], reverse=True)
 
@@ -82,24 +85,30 @@ for Login in LoginDocuments:
     ## Do Click for Daily
     wait = WebDriverWait(browser, 10)
     
+    ## Click Guide Modal
     modal_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---guide-close]')))
     modal_close_button.click()
     
-    click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.start.components-home-assets-__sign-content_---sign-wrapper")))
-    click_daily_sign_button.click()
-    
-    time.sleep(3)
     # Access GenshinTest database
     hoyolab_db = mongo_client[mongo_client_db]
     users_collection = hoyolab_db[mongo_client_collection]
     try:
+        ## Click daily check-in button
+        click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content_---sign-wrapper']")))
+        click_daily_sign_button.click()
+        time.sleep(3)
+        ## Check Modal is open or not after click daily check-in
         checker_modal_close_button = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]')))
         checker_modal_close_button.click()
-        print("Click successful!")
+        user_data = {"username": username, 'timestamp': datetime.now()}
+        users_collection.insert_one(user_data)
+        print(f"{username} Check-in successful!")
+        ListAccountSuccess.append(username)
     except TE:
-        print("Click unsuccessful.")
+        print(f"{username} Check-in unsuccessful! or Already Check-in!")
+        ListAccountFail.append(username)
             
-    browser.deleteAllCookies()
+    browser.delete_all_cookies()
     browser.quit()
     
     print(f"Waiting for 10 seconds before clicking going to next account ...")
