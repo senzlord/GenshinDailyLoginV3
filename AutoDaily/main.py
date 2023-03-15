@@ -59,6 +59,9 @@ for Login in LoginDocuments:
     s=Service(r"./chromedriver/chromedriver.exe")
     browser = webdriver.Chrome(options=chop, service=s)
 
+    ## Do Click for Daily
+    wait = WebDriverWait(browser, 10)
+
     ## Login 1
     url = "https://hoyolab.com/"
     browser.get(url)
@@ -66,8 +69,20 @@ for Login in LoginDocuments:
         if cookie['domain'][1:] == 'hoyolab.com':
             browser.add_cookie({'domain': cookie['domain'][1:], 'expiry': cookie['expiry'], 'httpOnly': cookie['httpOnly'], 'name': cookie['name'], 'path': cookie['path'], 'secure': cookie['secure'], 'value': cookie['value']})
     browser.refresh()
-    time.sleep(3)
+    
+    ### This make this bot more human, but still not works and there are some problem on something cover the element to click always change each event or update.
+    ## Change Game Choice to Genshin Impact
+    # list_game_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class='custom-side-title-container']")))
+    # list_game_button.click()
+    
+    # switch_game_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//li[@class='game-item' and contains(text(), 'Genshin Impact')]")))
+    # switch_game_button.click()
+    
+    # ## Click check in buttom image to change page to act.hoyolab.com signin-sea-v3
+    # tools_checkin_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='mhy-tool-main' and @aria-label='Check-In']")))
+    # tools_checkin_button.click()
 
+    time.sleep(5)
     ## Login 2 + Daily Page
     url = "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481"
     browser.get(url)
@@ -82,9 +97,6 @@ for Login in LoginDocuments:
         time.sleep(1)
     print("\n")
 
-    ## Do Click for Daily
-    wait = WebDriverWait(browser, 10)
-    
     ## Click Guide Modal
     modal_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---guide-close]')))
     modal_close_button.click()
