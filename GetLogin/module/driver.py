@@ -14,9 +14,9 @@ def driver(username,password,fill_password):
     chop.add_argument("start-maximized")
     # chop.add_argument("headless")
     if platform.system() == 'Windows':
-        s = Service(r"./chromedriver/chromedriver.exe")
+        s = Service(r"../chromedriver/chromedriver.exe")
     elif platform.system() == 'Linux':
-        s = Service(r"./chromedriver/chromedriver")
+        s = Service(r"../chromedriver/chromedriver")
     else:
         print("Not Supported Yet.")
         exit()
