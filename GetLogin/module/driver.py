@@ -11,7 +11,7 @@ def driver(username,password,fill_password):
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
     # chop.add_argument("headless")
-    s = Service(r"./chromedriver/chromedriver.exe")
+    s = Service(r"../chromedriver/chromedriver.exe")
     browser = webdriver.Chrome(options=chop, service=s)
 
     # navigate to the given URL
