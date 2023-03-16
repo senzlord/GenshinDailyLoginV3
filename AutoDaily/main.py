@@ -9,6 +9,7 @@ from selenium.common.exceptions import TimeoutException as TE
 import time
 import pymongo
 import os
+import platform
 from dotenv import load_dotenv
 from datetime import datetime
 
@@ -56,7 +57,13 @@ for Login in LoginDocuments:
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
     # chop.add_argument("headless")
-    s = Service(r"../chromedriver/chromedriver.exe")
+    if platform.system() == 'Windows':
+        s = Service(r"./chromedriver/chromedriver.exe")
+    elif platform.system() == 'Linux':
+        s = Service(r"./chromedriver/chromedriver")
+    else:
+        print("Not Supported Yet.")
+        exit()
     browser = webdriver.Chrome(options=chop, service=s)
 
     ## Do Click for Daily

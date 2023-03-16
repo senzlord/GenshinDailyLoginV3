@@ -1,4 +1,6 @@
 import time
+import platform
+
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -11,7 +13,13 @@ def driver(username,password,fill_password):
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
     # chop.add_argument("headless")
-    s = Service(r"../chromedriver/chromedriver.exe")
+    if platform.system() == 'Windows':
+        s = Service(r"./chromedriver/chromedriver.exe")
+    elif platform.system() == 'Linux':
+        s = Service(r"./chromedriver/chromedriver")
+    else:
+        print("Not Supported Yet.")
+        exit()
     browser = webdriver.Chrome(options=chop, service=s)
 
     # navigate to the given URL
