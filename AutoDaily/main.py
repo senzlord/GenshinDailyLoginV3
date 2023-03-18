@@ -109,8 +109,6 @@ for Login in LoginDocuments:
     modal_close_button.click()
     
     # Access GenshinTest database
-    hoyolab_db = mongo_client[mongo_client_db]
-    users_collection = hoyolab_db[mongo_client_collection]
     try:
         ## Click daily check-in button
         click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content_---sign-wrapper']")))
@@ -120,7 +118,7 @@ for Login in LoginDocuments:
         checker_modal_close_button = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]')))
         checker_modal_close_button.click()
         user_data = {"username": username, 'timestamp': datetime.now()}
-        users_collection.insert_one(user_data)
+        log_collection.insert_one(user_data)
         print(f"{username} Check-in successful!")
         ListAccountSuccess.append(username)
     except TE:
