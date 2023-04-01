@@ -4,8 +4,10 @@
 - MongoDB (For Saving Login Cookies and Retrieving Cookies to Login)
 
 # VENV Usage
+- install python alias it as py
 - py -m venv env
-- .\env\Scripts\activate
+- Windows: .\env\Scripts\activate
+- Linux: source env/bin/activate
 - pip install requirements.txt
 
 # Tested Operating System
