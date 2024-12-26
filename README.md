@@ -1,7 +1,3 @@
-﻿Looking at your project structure, it seems you have two main directories, **AutoDaily** and **GetLogin**, each with its respective scripts and virtual environments (`env`). Here's how you can update your README to reflect this structure and guide others in setting up and using the project effectively.
-
----
-
 # **GenshinDailyLoginV3**
 
 A Python-based automation script for daily login activities in Genshin Impact using Selenium and MongoDB. This project is organized into two modules:
