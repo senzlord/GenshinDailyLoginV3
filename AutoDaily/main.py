@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException as TE
+from webdriver_manager.chrome import ChromeDriverManager
 
 import time
 import pymongo
@@ -36,12 +37,16 @@ else:
     print("The collection doesn't exists.")
     exit()
     
+# Check if the collection exists
 if mongo_client_log_collection in db.list_collection_names():
     log_collection = db[mongo_client_log_collection]
     print("The log collection exists.")
 else:
-    print("The log collection doesn't exists.")
-    exit()
+    print("The log collection doesn't exist. Creating it now.")
+    log_collection = db[mongo_client_log_collection]
+    # Create the collection by inserting a document
+    log_collection.insert_one({"message": "Initializing log collection"})
+    print("Log collection created and initialized.")
 
 # Find all documents in the collection
 LoginDocuments = collection.find()
@@ -54,48 +59,35 @@ for Login in LoginDocuments:
     cookies = Login['cookies']
     cookies.sort(key=lambda x: x["domain"], reverse=True)
 
+    # Create a new Chrome browser instance with options
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
-    # chop.add_argument("headless")
-    if platform.system() == 'Windows':
-        s = Service(r"./chromedriver/chromedriver.exe")
-    elif platform.system() == 'Linux':
-        s = Service("../chromedriver/chromedriver")
-    else:
-        print("Not Supported Yet.")
-        exit()
-    browser = webdriver.Chrome(options=chop, service=s)
+    # Uncomment the next line if you want to run in headless mode
+    # chop.add_argument("--headless")
+    chop.add_argument("--no-sandbox")
+    chop.add_argument("--disable-dev-shm-usage")
 
-    ## Do Click for Daily
+    # Use WebDriver Manager to automatically handle ChromeDriver
+    browser = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chop)
+
+    # Navigate to the given URL
+    url = 'https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481'
+    browser.get(url)
+
     wait = WebDriverWait(browser, 10)
 
-    ## Login 1
-    url = "https://hoyolab.com/"
+    # Login 2 + Daily Page
+    target_domains = ['.hoyolab.com', '.hoyoverse.com']
     browser.get(url)
     for cookie in cookies:
-        if cookie['domain'][1:] == 'hoyolab.com':
-            browser.add_cookie({'domain': cookie['domain'][1:], 'expiry': cookie['expiry'], 'httpOnly': cookie['httpOnly'], 'name': cookie['name'], 'path': cookie['path'], 'secure': cookie['secure'], 'value': cookie['value']})
-    browser.refresh()
-    
-    ### This make this bot more human, but still not works and there are some problem on something cover the element to click always change each event or update.
-    ## Change Game Choice to Genshin Impact
-    # list_game_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class='custom-side-title-container']")))
-    # list_game_button.click()
-    
-    # switch_game_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//li[@class='game-item' and contains(text(), 'Genshin Impact')]")))
-    # switch_game_button.click()
-    
-    # ## Click check in buttom image to change page to act.hoyolab.com signin-sea-v3
-    # tools_checkin_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='mhy-tool-main' and @aria-label='Check-In']")))
-    # tools_checkin_button.click()
+        if any(domain in cookie['domain'] for domain in target_domains):
+            print(f"Adding cookie for domain: {cookie['domain']}")
+            # Dynamically construct the cookie dictionary
+            dynamic_cookie = {key: cookie[key] for key in cookie if key != 'domain'}
+            dynamic_cookie['domain'] = cookie['domain']
+            # Add the cookie to the browser
+            browser.add_cookie(dynamic_cookie)
 
-    time.sleep(5)
-    ## Login 2 + Daily Page
-    url = "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481"
-    browser.get(url)
-    for cookie in cookies:
-        if cookie['domain'][1:] == 'act.hoyolab.com':
-            browser.add_cookie({'domain': cookie['domain'][1:], 'expiry': cookie['expiry'], 'httpOnly': cookie['httpOnly'], 'name': cookie['name'], 'path': cookie['path'], 'secure': cookie['secure'], 'value': cookie['value']})
     browser.refresh()
     
     print(f"Waiting for 10 seconds before clicking daily check-in content ...")
@@ -111,7 +103,7 @@ for Login in LoginDocuments:
     # Access GenshinTest database
     try:
         ## Click daily check-in button
-        click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content_---sign-wrapper']")))
+        click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content-test_---sign-wrapper---']")))
         click_daily_sign_button.click()
         time.sleep(3)
         ## Check Modal is open or not after click daily check-in
