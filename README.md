@@ -80,10 +80,11 @@ cd GenshinDailyLoginV3
 
 ---
 
-## **Environment Variables**
+## Setting Up Environment Variables
 
-1. Copy the `.env.example` file to `.env` in both `AutoDaily` and `GetLogin` directories.
-2. Update the `.env` files with your MongoDB connection details and other required configurations.
+1. Navigate to each module directory (`AutoDaily` and `GetLogin`).
+2. Copy the `.env.example` file to `.env`
+3. And Set Your own MongoDB server
 
 ---
 
