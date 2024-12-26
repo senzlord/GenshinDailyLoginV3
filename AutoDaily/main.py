@@ -61,9 +61,10 @@ for Login in LoginDocuments:
 
     # Create a new Chrome browser instance with options
     chop = webdriver.ChromeOptions()
-    chop.add_argument("start-maximized")
-    # Uncomment the next line if you want to run in headless mode
-    # chop.add_argument("--headless")
+    if os.getenv('HEADLESS') == 'true':
+        chop.add_argument("--headless")
+    else:
+        chop.add_argument("start-maximized")
     chop.add_argument("--no-sandbox")
     chop.add_argument("--disable-dev-shm-usage")
 
