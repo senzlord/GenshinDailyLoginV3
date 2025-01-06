@@ -1,3 +1,7 @@
+Here’s an improved README section focused on **Dependencies** with better structure and additional details:
+
+---
+
 # **GenshinDailyLoginV3**
 
 A Python-based automation script for daily login activities in Genshin Impact using Selenium and MongoDB. This project is organized into two modules:
@@ -32,82 +36,93 @@ GenshinDailyLoginV3/
 
 ---
 
-## **Requirements**
-- **MongoDB**: Used for saving and retrieving login cookies.
-- **Python**: Ensure Python is installed and aliased as `py` on your system.
+## **Dependencies**
+
+This project relies on the following key dependencies:
+
+### **1. Python Libraries**
+Make sure the following Python packages are installed:
+
+- **`selenium`**: Used for automating browser interactions.
+  ```bash
+  pip install selenium
+  ```
+- **`webdriver_manager`**: Automatically downloads and manages the appropriate WebDriver for Selenium.
+  ```bash
+  pip install webdriver_manager
+  ```
+- **`pymongo`**: Provides a Python interface to MongoDB for saving and retrieving login cookies.
+  ```bash
+  pip install pymongo
+  ```
+- **`python-dotenv`**: Enables the use of `.env` files to manage environment variables.
+  ```bash
+  pip install python-dotenv
+  ```
+
+### **2. Additional Requirements**
+- **MongoDB**: A NoSQL database used to store user cookies and account data.
+  - Install MongoDB Community Edition:
+    - [MongoDB Installation Guide](https://www.mongodb.com/docs/manual/installation/)
+  - Start the MongoDB server before running the scripts.
+
+- **Google Chrome**: Required for browser automation with Selenium.
+  - Install Chrome: [Google Chrome Download](https://www.google.com/chrome/)
+  - Make sure the Chrome version matches the WebDriver version managed by `webdriver_manager`.
 
 ---
 
-## **Setup Instructions**
+## **Installing Dependencies**
 
-### **Step 1: Clone the Repository**
-```bash
-git clone <repository-url>
-cd GenshinDailyLoginV3
-```
+### **Method 1: Using `requirements.txt`**
+Each module has its own `requirements.txt` file. Install the dependencies by running:
 
-### **Step 2: Set Up Virtual Environments**
-
-#### For **AutoDaily**:
-1. Navigate to the `AutoDaily` directory:
-   ```bash
-   cd AutoDaily
-   ```
-2. Create a virtual environment:
-   ```bash
-   py -m venv env
-   ```
-3. Activate the virtual environment:
-   - **Windows**:
-     ```bash
-     .\env\Scripts\activate
-     ```
-   - **Linux**:
-     ```bash
-     source env/bin/activate
-     ```
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-#### For **GetLogin**:
-1. Navigate to the `GetLogin` directory:
-   ```bash
-   cd ../GetLogin
-   ```
-2. Repeat steps 2–4 as above.
-
----
-
-## Setting Up Environment Variables
-
-1. Navigate to each module directory (`AutoDaily` and `GetLogin`).
-2. Copy the `.env.example` file to `.env`
-3. And Set Your own MongoDB server
-
----
-
-## **Usage**
-
-### **1. Running GetLogin**
-To retrieve cookies and manage login credentials:
-```bash
-cd GetLogin
-py main.py
-```
-
-### **2. Running AutoDaily**
-To automate the daily check-in:
+#### For AutoDaily:
 ```bash
 cd AutoDaily
-py main.py
+pip install -r requirements.txt
+```
+
+#### For GetLogin:
+```bash
+cd ../GetLogin
+pip install -r requirements.txt
+```
+
+### **Method 2: Manual Installation**
+If you encounter issues with the `requirements.txt` file, install the dependencies manually:
+
+```bash
+pip install selenium
+pip install webdriver_manager
+pip install pymongo
+pip install python-dotenv
 ```
 
 ---
 
-## **Tested Operating Systems**
-- **Linux**: Ubuntu 20.04
-- **Windows**: Windows 10, Windows 11
+## **Setting Up Environment Variables**
+
+1. Copy the `.env.example` file to `.env` in both `AutoDaily` and `GetLogin` directories:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Open the `.env` file and configure the following variables:
+   - `MONGO_CLIENT_LINK`: Your MongoDB connection string.
+   - `MONGO_CLIENT_DB`: The name of the database.
+   - `MONGO_CLIENT_COLLECTION`: The name of the collection for user cookies.
+   - `MONGO_CLIENT_LOG_COLLECTION`: The name of the collection for logging.
+
+---
+
+## **Quick Test for Dependencies**
+
+Run the following command to verify if all dependencies are installed:
+```bash
+python -m pip freeze | grep -E "selenium|webdriver_manager|pymongo|python-dotenv"
+```
+
+If any dependency is missing, install it as shown in the **Dependencies** section above.
 
 ---

@@ -10,56 +10,51 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import pymongo
 import os
-import platform
 from dotenv import load_dotenv
 from datetime import datetime
+import random
 
-# Get Data From MongoDB
-load_dotenv()
-mongo_client_link = os.getenv('MONGO_CLIENT_LINK')
-mongo_client_db = os.getenv('MONGO_CLIENT_DB')
-mongo_client_collection = os.getenv('MONGO_CLIENT_COLLECTION')
-mongo_client_log_collection = os.getenv('MONGO_CLIENT_LOG_COLLECTION')
-mongo_client = pymongo.MongoClient(mongo_client_link)
+def log_with_time(message):
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
-# Select the database and collection
-if mongo_client_db in mongo_client.list_database_names():
-    db = mongo_client[mongo_client_db]
-    print("The database exists.")
-else:
-    print("The database doesn't exists.")
-    exit()
-    
-if mongo_client_collection in db.list_collection_names():
-    collection = db[mongo_client_collection]
-    print("The collection exists.")
-else:
-    print("The collection doesn't exists.")
-    exit()
-    
-# Check if the collection exists
-if mongo_client_log_collection in db.list_collection_names():
-    log_collection = db[mongo_client_log_collection]
-    print("The log collection exists.")
-else:
-    print("The log collection doesn't exist. Creating it now.")
-    log_collection = db[mongo_client_log_collection]
-    # Create the collection by inserting a document
-    log_collection.insert_one({"message": "Initializing log collection"})
-    print("Log collection created and initialized.")
+def initialize_mongo():
+    """Initialize MongoDB connection and collections."""
+    load_dotenv()
+    mongo_client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_LINK'))
 
-# Find all documents in the collection
-LoginDocuments = collection.find()
-ListAccountSuccess = []
-ListAccountFail = []
+    # Select database
+    mongo_client_db = os.getenv('MONGO_CLIENT_DB')
+    if mongo_client_db in mongo_client.list_database_names():
+        db = mongo_client[mongo_client_db]
+        log_with_time("The database exists.")
+    else:
+        log_with_time("The database doesn't exist.")
+        exit()
 
-# Print the documents
-for Login in LoginDocuments:
-    username = Login['username']
-    cookies = Login['cookies']
-    cookies.sort(key=lambda x: x["domain"], reverse=True)
+    # Select collection
+    mongo_client_collection = os.getenv('MONGO_CLIENT_COLLECTION')
+    if mongo_client_collection in db.list_collection_names():
+        collection = db[mongo_client_collection]
+        log_with_time("The collection exists.")
+    else:
+        log_with_time("The collection doesn't exist.")
+        exit()
 
-    # Create a new Chrome browser instance with options
+    # Check or create log collection
+    mongo_client_log_collection = os.getenv('MONGO_CLIENT_LOG_COLLECTION')
+    if mongo_client_log_collection in db.list_collection_names():
+        log_collection = db[mongo_client_log_collection]
+        log_with_time("The log collection exists.")
+    else:
+        log_with_time("The log collection doesn't exist. Creating it now.")
+        log_collection = db[mongo_client_log_collection]
+        log_collection.insert_one({"message": "Initializing log collection"})
+        log_with_time("Log collection created and initialized.")
+
+    return collection, log_collection
+
+def initialize_browser():
+    """Initialize Selenium WebDriver with options."""
     chop = webdriver.ChromeOptions()
     if os.getenv('HEADLESS') == 'true':
         chop.add_argument("--headless")
@@ -68,63 +63,99 @@ for Login in LoginDocuments:
     chop.add_argument("--no-sandbox")
     chop.add_argument("--disable-dev-shm-usage")
 
-    # Use WebDriver Manager to automatically handle ChromeDriver
-    browser = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chop)
+    return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chop)
 
-    # Navigate to the given URL
-    url = 'https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481'
-    browser.get(url)
-
-    wait = WebDriverWait(browser, 10)
-
-    # Login 2 + Daily Page
-    target_domains = ['.hoyolab.com', '.hoyoverse.com']
-    browser.get(url)
+def add_cookies_to_browser(browser, cookies, target_domains):
+    """Add cookies to the browser for specified target domains."""
     for cookie in cookies:
         if any(domain in cookie['domain'] for domain in target_domains):
-            print(f"Adding cookie for domain: {cookie['domain']}")
-            # Dynamically construct the cookie dictionary
+            log_with_time(f"Adding cookie for domain: {cookie['domain']}")
             dynamic_cookie = {key: cookie[key] for key in cookie if key != 'domain'}
             dynamic_cookie['domain'] = cookie['domain']
-            # Add the cookie to the browser
             browser.add_cookie(dynamic_cookie)
 
-    browser.refresh()
-    
-    print(f"Waiting for 10 seconds before clicking daily check-in content ...")
-    for i in range(10, 0, -1):
-        print(f"\r{i} seconds remaining...", end="")
-        time.sleep(1)
-    print("\n")
-
-    ## Click Guide Modal
-    modal_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---guide-close]')))
-    modal_close_button.click()
-    
-    # Access GenshinTest database
+def click_close_button_if_exists(browser, wait):
     try:
-        ## Click daily check-in button
-        click_daily_sign_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content-test_---sign-wrapper---']")))
-        click_daily_sign_button.click()
-        time.sleep(3)
-        ## Check Modal is open or not after click daily check-in
-        checker_modal_close_button = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]')))
-        checker_modal_close_button.click()
-        user_data = {"username": username, 'timestamp': datetime.now()}
-        log_collection.insert_one(user_data)
-        print(f"{username} Check-in successful!")
-        ListAccountSuccess.append(username)
+        # Wait for the button to be present
+        close_button = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "span.components-home-assets-__sign-guide_---guide-close---2VvmzE"))
+        )
+        close_button.click()
+        log_with_time("Close button clicked successfully.")
+        return True
     except TE:
-        print(f"{username} Check-in unsuccessful! or Already Check-in!")
-        ListAccountFail.append(username)
-            
-    browser.delete_all_cookies()
-    browser.quit()
-    
-    print(f"Waiting for 10 seconds before clicking going to next account ...")
-    for i in range(10, 0, -1):
-        print(f"\r{i} seconds remaining...", end="")
-        time.sleep(1)
-    print("\n")
-    
-print("All Account Clear")
+        log_with_time("Close button not found.")
+        return False
+
+def perform_check_in(browser, wait, username, log_collection):
+    """Perform daily check-in and handle modal popups."""
+    try:
+        time.sleep(10)
+
+        # Close guide modal if it exists
+        click_close_button_if_exists(browser, wait)
+
+        # Click daily check-in button
+        check_in_button = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content-test_---sign-wrapper---']"))
+        )
+        check_in_button.click()
+        time.sleep(3)
+
+        # Close the confirmation modal
+        modal_close_button = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
+        )
+        modal_close_button.click()
+
+        # Log success
+        log_collection.insert_one({"username": username, "timestamp": datetime.now()})
+        log_with_time(f"{username} Check-in successful!")
+        return True
+
+    except TE:
+        log_with_time(f"{username} Check-in unsuccessful! or Already Check-in!")
+        return False
+
+def main():
+    collection, log_collection = initialize_mongo()
+    accounts = collection.find()
+
+    # Random sleep for 5-10 minutes
+    sleep_time = random.randint(300, 600)
+    log_with_time(f"Sleeping for {sleep_time} seconds before starting...")
+    time.sleep(sleep_time)
+
+    for account in accounts:
+        username = account['username']
+        cookies = account['cookies']
+        cookies.sort(key=lambda x: x["domain"], reverse=True)
+
+        # Initialize browser
+        browser = initialize_browser()
+        wait = WebDriverWait(browser, 10)
+
+        # Navigate to daily check-in page
+        url = 'https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481'
+        browser.get(url)
+
+        # Add cookies
+        target_domains = ['.hoyolab.com', '.hoyoverse.com']
+        add_cookies_to_browser(browser, cookies, target_domains)
+        browser.refresh()
+
+        # Perform check-in
+        perform_check_in(browser, wait, username, log_collection)
+
+        # Clean up
+        browser.delete_all_cookies()
+        browser.quit()
+
+        # Wait before next account
+        log_with_time("Waiting for 10 seconds before switching to the next account...")
+        time.sleep(10)
+
+    log_with_time("All accounts processed.")
+
+if __name__ == "__main__":
+    main()
