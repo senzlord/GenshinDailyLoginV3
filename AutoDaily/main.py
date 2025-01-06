@@ -15,6 +15,7 @@ from datetime import datetime
 import random
 
 def log_with_time(message):
+    """Log a message with a timestamp."""
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
 def initialize_mongo():
@@ -23,33 +24,33 @@ def initialize_mongo():
     mongo_client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_LINK'))
 
     # Select database
-    mongo_client_db = os.getenv('MONGO_CLIENT_DB')
-    if mongo_client_db in mongo_client.list_database_names():
-        db = mongo_client[mongo_client_db]
-        log_with_time("The database exists.")
-    else:
+    db_name = os.getenv('MONGO_CLIENT_DB')
+    if db_name not in mongo_client.list_database_names():
         log_with_time("The database doesn't exist.")
         exit()
 
-    # Select collection
-    mongo_client_collection = os.getenv('MONGO_CLIENT_COLLECTION')
-    if mongo_client_collection in db.list_collection_names():
-        collection = db[mongo_client_collection]
-        log_with_time("The collection exists.")
-    else:
+    db = mongo_client[db_name]
+    log_with_time("The database exists.")
+
+    # Select main collection
+    collection_name = os.getenv('MONGO_CLIENT_COLLECTION')
+    if collection_name not in db.list_collection_names():
         log_with_time("The collection doesn't exist.")
         exit()
 
+    collection = db[collection_name]
+    log_with_time("The collection exists.")
+
     # Check or create log collection
-    mongo_client_log_collection = os.getenv('MONGO_CLIENT_LOG_COLLECTION')
-    if mongo_client_log_collection in db.list_collection_names():
-        log_collection = db[mongo_client_log_collection]
-        log_with_time("The log collection exists.")
-    else:
+    log_collection_name = os.getenv('MONGO_CLIENT_LOG_COLLECTION')
+    if log_collection_name not in db.list_collection_names():
         log_with_time("The log collection doesn't exist. Creating it now.")
-        log_collection = db[mongo_client_log_collection]
+        log_collection = db[log_collection_name]
         log_collection.insert_one({"message": "Initializing log collection"})
         log_with_time("Log collection created and initialized.")
+    else:
+        log_collection = db[log_collection_name]
+        log_with_time("The log collection exists.")
 
     return collection, log_collection
 
@@ -75,8 +76,8 @@ def add_cookies_to_browser(browser, cookies, target_domains):
             browser.add_cookie(dynamic_cookie)
 
 def click_close_button_if_exists(browser, wait):
+    """Click the close button if it exists."""
     try:
-        # Wait for the button to be present
         close_button = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "span.components-home-assets-__sign-guide_---guide-close---2VvmzE"))
         )
@@ -118,12 +119,13 @@ def perform_check_in(browser, wait, username, log_collection):
         return False
 
 def main():
+    """Main function to process accounts for daily check-in."""
     collection, log_collection = initialize_mongo()
     accounts = collection.find()
 
-    # Random sleep for 5-10 minutes
-    sleep_time = random.randint(300, 600)
-    log_with_time(f"Sleeping for {sleep_time} seconds before starting...")
+    # Random sleep before starting
+    sleep_time = random.randint(int(os.getenv('MIN_SLEEP_TIME', '300')), int(os.getenv('MAX_SLEEP_TIME', '600')))
+    log_with_time(f"Sleeping for {sleep_time // 60} minutes and {sleep_time % 60} seconds before starting...")
     time.sleep(sleep_time)
 
     for account in accounts:

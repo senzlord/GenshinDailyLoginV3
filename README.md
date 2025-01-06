@@ -113,7 +113,9 @@ pip install python-dotenv
    - `MONGO_CLIENT_DB`: The name of the database.
    - `MONGO_CLIENT_COLLECTION`: The name of the collection for user cookies.
    - `MONGO_CLIENT_LOG_COLLECTION`: The name of the collection for logging.
-
+   - `HEADLESS`: Set to `false` to run the browser in headful mode (visible) during automation.
+   - `MIN_SLEEP_TIME`: The minimum sleep time (in seconds) between login attempts.
+   - `MAX_SLEEP_TIME`: The maximum sleep time (in seconds) between login attempts.
 ---
 
 ## **Quick Test for Dependencies**
