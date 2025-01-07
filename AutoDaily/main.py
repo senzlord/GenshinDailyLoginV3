@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException as TE
 from webdriver_manager.chrome import ChromeDriverManager
@@ -17,6 +18,42 @@ import random
 def log_with_time(message):
     """Log a message with a timestamp."""
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
+
+def countdown(seconds, start_countdown=10):
+    """
+    Display a countdown in minutes and seconds, starting at the specified time.
+    If start_countdown is not provided, it defaults to 10 seconds.
+    """
+    if seconds > start_countdown:
+        minutes, remaining_seconds = divmod(seconds, 60)
+        if minutes > 0:
+            print(f"Waiting for {minutes} minute(s) and {remaining_seconds} second(s)...")
+        else:
+            print(f"Waiting for {remaining_seconds} seconds...")
+        time.sleep(seconds - start_countdown)  # Sleep for the initial period
+        seconds = start_countdown  # Start countdown when specified time remains
+
+    for i in range(seconds, 0, -1):
+        minutes, remaining_seconds = divmod(i, 60)
+        if minutes > 0:
+            print(f"Countdown: {minutes} minute(s) and {remaining_seconds} second(s) remaining", end="\r", flush=True)
+        else:
+            print(f"Countdown: {remaining_seconds} second(s) remaining", end="\r", flush=True)
+        time.sleep(1)
+    print()
+
+def human_like_click(browser, element):
+    """
+    Simulate a human-like click action.
+    Moves the mouse to the element, pauses, and clicks.
+    """
+    try:
+        # Move to the element, pause for a random time, then click
+        action = ActionChains(browser)
+        action.move_to_element(element).pause(random.uniform(0.1, 0.5)).click(element).perform()
+        print("Human-like click performed successfully.")
+    except Exception as e:
+        print(f"Error performing human-like click: {e}")
 
 def initialize_mongo():
     """Initialize MongoDB connection and collections."""
@@ -76,10 +113,10 @@ def add_cookies_to_browser(browser, cookies, target_domains):
             browser.add_cookie(dynamic_cookie)
 
 def click_close_button_if_exists(browser, wait):
-    """Click the close button if it exists."""
+    """Click the close button for the guide modal if it exists."""
     try:
         close_button = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "span.components-home-assets-__sign-guide_---guide-close---2VvmzE"))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "span[class*='guide-close']"))
         )
         close_button.click()
         log_with_time("Close button clicked successfully.")
@@ -103,34 +140,41 @@ def handle_cookie_consent(browser, wait):
 def perform_check_in(browser, wait, username, log_collection):
     """Perform daily check-in and handle modal popups."""
     try:
-        time.sleep(10)
+        countdown(10)
 
         # Close guide modal if it exists
         click_close_button_if_exists(browser, wait)
 
+        countdown(5)
+
         # Handle cookie consent banner
         handle_cookie_consent(browser, wait)
 
-        # Click daily check-in button
+        # Wait for and click the daily check-in button
         check_in_button = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content-test_---sign-wrapper---']"))
         )
-        check_in_button.click()
-        time.sleep(3)
-
-        # Close the confirmation modal
+        human_like_click(browser, check_in_button)
+        log_with_time("Daily check-in button clicked.")
+        
+        # Wait for the confirmation modal to appear
         modal_close_button = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
         )
-        modal_close_button.click()
-
+        log_with_time("Confirmation modal appeared.")
+        
+        # Close the confirmation modal
+        human_like_click(browser, modal_close_button)
+        log_with_time("Confirmation modal closed successfully.")
+        
         # Log success
         log_collection.insert_one({"username": username, "timestamp": datetime.now()})
         log_with_time(f"{username} Check-in successful!")
         return True
 
-    except TE:
-        log_with_time(f"{username} Check-in unsuccessful! or Already Check-in!")
+    except TE as e:
+        log_with_time(f"Error during check-in: {e}")
+        log_collection.insert_one({"username": username, "timestamp": datetime.now(), "status": "failed"})
         return False
 
 def main():
@@ -141,7 +185,7 @@ def main():
     # Random sleep before starting
     sleep_time = random.randint(int(os.getenv('MIN_SLEEP_TIME', '300')), int(os.getenv('MAX_SLEEP_TIME', '600')))
     log_with_time(f"Sleeping for {sleep_time // 60} minutes and {sleep_time % 60} seconds before starting...")
-    time.sleep(sleep_time)
+    countdown(sleep_time)
 
     for account in accounts:
         username = account['username']
@@ -170,7 +214,7 @@ def main():
 
         # Wait before next account
         log_with_time("Waiting for 10 seconds before switching to the next account...")
-        time.sleep(10)
+        countdown(10)
 
     log_with_time("All accounts processed.")
 
