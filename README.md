@@ -138,6 +138,7 @@ The `GetLogin` module handles the retrieval and management of login credentials 
 ### **2. AutoDaily Module**
 This module was last tested on January 7, 2025. If there are any changes to the website, the module may not work as expected. Updates will be provided as necessary.
 To ensure the script runs daily without manual intervention, it is recommended to set up a cron job (Linux) or Task Scheduler (Windows). This allows the `AutoDaily` module to execute at a specified time each day, maintaining consistent login activity.
+
 The `AutoDaily` module is responsible for automating the daily login process. Here's a step-by-step overview of how it works:
 
 1. **Login Automation**: The script navigates to the Genshin Impact login page and performs the login using stored cookies.
