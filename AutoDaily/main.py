@@ -88,6 +88,18 @@ def click_close_button_if_exists(browser, wait):
         log_with_time("Close button not found.")
         return False
 
+def handle_cookie_consent(browser, wait):
+    """Handle the cookie consent banner if it appears."""
+    try:
+        # Wait for the cookie banner to appear
+        cookie_button = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, ".mihoyo-cookie-tips__button"))
+        )
+        cookie_button.click()
+        log_with_time("Cookie consent banner dismissed successfully.")
+    except TE:
+        log_with_time("Cookie consent banner not found or already dismissed.")
+
 def perform_check_in(browser, wait, username, log_collection):
     """Perform daily check-in and handle modal popups."""
     try:
@@ -95,6 +107,9 @@ def perform_check_in(browser, wait, username, log_collection):
 
         # Close guide modal if it exists
         click_close_button_if_exists(browser, wait)
+
+        # Handle cookie consent banner
+        handle_cookie_consent(browser, wait)
 
         # Click daily check-in button
         check_in_button = wait.until(
