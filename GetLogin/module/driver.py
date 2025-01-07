@@ -22,12 +22,31 @@ def inject_timer(browser, duration):
     overlay.style.borderRadius = '5px';
     overlay.style.fontSize = '16px';
     overlay.style.zIndex = '9999';
+
+    // Add a close button to end the timer early
+    var closeButton = document.createElement('button');
+    closeButton.innerText = 'End Timer';
+    closeButton.style.marginTop = '10px';
+    closeButton.style.backgroundColor = 'red';
+    closeButton.style.color = 'white';
+    closeButton.style.border = 'none';
+    closeButton.style.borderRadius = '5px';
+    closeButton.style.padding = '5px';
+    closeButton.style.cursor = 'pointer';
+
+    closeButton.onclick = function() {{
+        clearInterval(interval);
+        overlay.remove();
+    }};
+
+    overlay.appendChild(closeButton);
     document.body.appendChild(overlay);
 
     // Update timer every second
     var timer = {duration};
     var interval = setInterval(function() {{
         overlay.innerHTML = 'Time remaining: ' + timer + ' seconds';
+        overlay.appendChild(closeButton);
         timer--;
         if (timer < 0) {{
             clearInterval(interval);
@@ -41,8 +60,6 @@ def driver(username, password, fill_password):
     # Create a new Chrome browser instance with options
     chop = webdriver.ChromeOptions()
     chop.add_argument("start-maximized")
-    # Uncomment the next line if you want to run in headless mode
-    # chop.add_argument("--headless")
     chop.add_argument("--no-sandbox")
     chop.add_argument("--disable-dev-shm-usage")
 
@@ -97,11 +114,22 @@ def driver(username, password, fill_password):
 
     # Wait for user to login for a manual timer
     manual_timer = 60
-    print(f"Waiting for {manual_timer} seconds for user login captcha...")
     for i in range(manual_timer, 0, -1):
+        try:
+            # Check if the timer overlay still exists
+            timer_overlay = browser.find_element(By.ID, 'timer-overlay')
+            if not timer_overlay.is_displayed():
+                print("\nTimer overlay removed by user. Proceeding...")
+                break
+        except:
+            # Timer overlay no longer exists
+            print("\nTimer overlay not found. Proceeding...")
+            break
+
         print(f"\r{i} seconds remaining...", end="")
         time.sleep(1)
-    print("\n")
+    else:
+        print("\nTimer completed. Proceeding...")
 
     # Check if the user has logged in
     checklogin = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'mhy-hoyolab-account-block')))

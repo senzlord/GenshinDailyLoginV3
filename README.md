@@ -1,8 +1,4 @@
-Here’s an improved README section focused on **Dependencies** with better structure and additional details:
-
----
-
-# **GenshinDailyLoginV3**
+﻿# **GenshinDailyLoginV3**
 
 A Python-based automation script for daily login activities in Genshin Impact using Selenium and MongoDB. This project is organized into two modules:
 
@@ -126,5 +122,25 @@ python -m pip freeze | grep -E "selenium|webdriver_manager|pymongo|python-dotenv
 ```
 
 If any dependency is missing, install it as shown in the **Dependencies** section above.
+
+---
+
+## **How It Works**
+
+### **1. GetLogin Module**
+Please note that this module currently cannot bypass the captcha. You will need to manually solve the captcha. Once completed, you can press the timer button to expedite the process.
+The `GetLogin` module handles the retrieval and management of login credentials and cookies. Here's how it works:
+
+1. **Manual Login**: The user manually logs into their Genshin Impact account through the automated browser.
+2. **Retrieve Cookies**: After a successful login, the script retrieves the cookies from the browser.
+3. **Save Cookies**: The retrieved cookies are saved to MongoDB for future use by the `AutoDaily` module.
+
+### **2. AutoDaily Module**
+This module was last tested on January 7, 2025. If there are any changes to the website, the module may not work as expected. Updates will be provided as necessary.
+The `AutoDaily` module is responsible for automating the daily login process. Here's a step-by-step overview of how it works:
+
+1. **Login Automation**: The script navigates to the Genshin Impact login page and performs the login using stored cookies.
+2. **Daily Sign-In Actions**: Selenium will automatically navigate through the necessary steps, including clicking on the guide, accepting cookies, performing the daily sign-in, and confirming the action.
+3. **Logging**: Logs the login activity and any errors encountered during the process.
 
 ---
