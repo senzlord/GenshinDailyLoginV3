@@ -42,19 +42,6 @@ def countdown(seconds, start_countdown=10):
         time.sleep(1)
     print()
 
-def human_like_click(browser, element):
-    """
-    Simulate a human-like click action.
-    Moves the mouse to the element, pauses, and clicks.
-    """
-    try:
-        # Move to the element, pause for a random time, then click
-        action = ActionChains(browser)
-        action.move_to_element(element).pause(random.uniform(0.1, 0.5)).click(element).perform()
-        print("Human-like click performed successfully.")
-    except Exception as e:
-        print(f"Error performing human-like click: {e}")
-
 def initialize_mongo():
     """Initialize MongoDB connection and collections."""
     load_dotenv()
@@ -154,7 +141,7 @@ def perform_check_in(browser, wait, username, log_collection):
         check_in_button = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
         )
-        human_like_click(browser, check_in_button)
+        check_in_button.click()
         log_with_time("Daily check-in button clicked.")
         
         # Wait for the confirmation modal to appear
@@ -164,7 +151,7 @@ def perform_check_in(browser, wait, username, log_collection):
         log_with_time("Confirmation modal appeared.")
         
         # Close the confirmation modal
-        human_like_click(browser, modal_close_button)
+        modal_close_button.click()
         log_with_time("Confirmation modal closed successfully.")
         
         # Log success
