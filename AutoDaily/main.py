@@ -87,6 +87,8 @@ def initialize_browser():
         chop.add_argument("start-maximized")
     chop.add_argument("--no-sandbox")
     chop.add_argument("--disable-dev-shm-usage")
+    chop.add_argument("--disable-gpu")
+    chop.add_argument("--disable-software-rasterizer")
 
     return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chop)
 
@@ -137,28 +139,32 @@ def perform_check_in(browser, wait, username, log_collection):
         # Handle cookie consent banner
         handle_cookie_consent(browser, wait)
 
-        # Wait for and click the daily check-in button
-        check_in_button = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
-        )
-        check_in_button.click()
-        log_with_time("Daily check-in button clicked.")
-        
-        # Wait for the confirmation modal to appear
-        modal_close_button = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
-        )
-        log_with_time("Confirmation modal appeared.")
-        
-        # Close the confirmation modal
-        modal_close_button.click()
-        log_with_time("Confirmation modal closed successfully.")
-        
-        # Log success
-        log_collection.insert_one({"username": username, "timestamp": datetime.now()})
-        log_with_time(f"{username} Check-in successful!")
-        return True
+        # Check if the button exists
+        check_in_button = browser.find_elements(By.CSS_SELECTOR, "div[class*='sign-wrapper']")
+        if check_in_button:
+            # Click the first button found
+            check_in_button[0].click()
+            log_with_time("Check-in button clicked successfully.")
 
+            # Wait for the confirmation modal to appear
+            modal_close_button = wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
+            )
+            log_with_time("Confirmation modal appeared.")
+            
+            # Close the confirmation modal
+            modal_close_button.click()
+            log_with_time("Confirmation modal closed successfully.")
+            
+            # Log success
+            log_collection.insert_one({"username": username, "timestamp": datetime.now()})
+            log_with_time(f"{username} Check-in successful!")
+            return True
+        else:
+            # Log as already done if no button exists
+            log_with_time("Check-in button not found. Status: already done.")
+            log_collection.insert_one({"username": username, "timestamp": datetime.now(), "status": "already done"})
+        
     except TE as e:
         log_with_time(f"Error during check-in: {e}")
         log_collection.insert_one({"username": username, "timestamp": datetime.now(), "status": "failed"})
@@ -167,12 +173,15 @@ def perform_check_in(browser, wait, username, log_collection):
 def main():
     """Main function to process accounts for daily check-in."""
     collection, log_collection = initialize_mongo()
-    accounts = collection.find()
+    accounts = list(collection.find())
 
     # Random sleep before starting
     sleep_time = random.randint(int(os.getenv('MIN_SLEEP_TIME', '300')), int(os.getenv('MAX_SLEEP_TIME', '600')))
     log_with_time(f"Sleeping for {sleep_time // 60} minutes and {sleep_time % 60} seconds before starting...")
     countdown(sleep_time)
+
+    random.shuffle(accounts)
+    log_with_time("Accounts order randomized.")
 
     for account in accounts:
         username = account['username']
@@ -188,6 +197,7 @@ def main():
         browser.get(url)
 
         # Add cookies
+        log_with_time(f"Adding cookies for username: {username}")
         target_domains = ['.hoyolab.com', '.hoyoverse.com']
         add_cookies_to_browser(browser, cookies, target_domains)
         browser.refresh()
