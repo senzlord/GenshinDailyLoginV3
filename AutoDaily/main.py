@@ -152,7 +152,7 @@ def perform_check_in(browser, wait, username, log_collection):
 
         # Wait for and click the daily check-in button
         check_in_button = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='components-home-assets-__sign-content-test_---sign-wrapper---']"))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
         )
         human_like_click(browser, check_in_button)
         log_with_time("Daily check-in button clicked.")
