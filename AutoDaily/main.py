@@ -139,16 +139,18 @@ def perform_check_in(browser, wait, username, log_collection):
         # Handle cookie consent banner
         handle_cookie_consent(browser, wait)
 
+        countdown(5)
+
         # Wait for the check-in button to appear
         check_in_button = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
         )
         check_in_button.click()
         log_with_time("Check-in button clicked successfully.")
 
         # Wait for the confirmation modal to appear
         modal_close_button = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---dialog-close]'))
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
         )
         log_with_time("Confirmation modal appeared.")
         
@@ -176,8 +178,8 @@ def main():
     log_with_time(f"Sleeping for {sleep_time // 60} minutes and {sleep_time % 60} seconds before starting...")
     countdown(sleep_time)
 
-    random.shuffle(accounts)
-    log_with_time("Accounts order randomized.")
+    # random.shuffle(accounts)
+    # log_with_time("Accounts order randomized.")
 
     for account in accounts:
         username = account['username']
