@@ -139,31 +139,27 @@ def perform_check_in(browser, wait, username, log_collection):
         # Handle cookie consent banner
         handle_cookie_consent(browser, wait)
 
-        # Check if the button exists
-        check_in_button = browser.find_elements(By.CSS_SELECTOR, "div[class*='sign-wrapper']")
-        if check_in_button:
-            # Click the first button found
-            check_in_button[0].click()
-            log_with_time("Check-in button clicked successfully.")
+        # Wait for the check-in button to appear
+        check_in_button = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class*='sign-wrapper']'))
+        )
+        check_in_button.click()
+        log_with_time("Check-in button clicked successfully.")
 
-            # Wait for the confirmation modal to appear
-            modal_close_button = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
-            )
-            log_with_time("Confirmation modal appeared.")
-            
-            # Close the confirmation modal
-            modal_close_button.click()
-            log_with_time("Confirmation modal closed successfully.")
-            
-            # Log success
-            log_collection.insert_one({"username": username, "timestamp": datetime.now()})
-            log_with_time(f"{username} Check-in successful!")
-            return True
-        else:
-            # Log as already done if no button exists
-            log_with_time("Check-in button not found. Status: already done.")
-            log_collection.insert_one({"username": username, "timestamp": datetime.now(), "status": "already done"})
+        # Wait for the confirmation modal to appear
+        modal_close_button = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
+        )
+        log_with_time("Confirmation modal appeared.")
+        
+        # Close the confirmation modal
+        modal_close_button.click()
+        log_with_time("Confirmation modal closed successfully.")
+        
+        # Log success
+        log_collection.insert_one({"username": username, "timestamp": datetime.now()})
+        log_with_time(f"{username} Check-in successful!")
+        return True
         
     except TE as e:
         log_with_time(f"Error during check-in: {e}")
