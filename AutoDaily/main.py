@@ -141,14 +141,14 @@ def perform_check_in(browser, wait, username, log_collection):
 
         # Wait for the check-in button to appear
         check_in_button = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class*='sign-wrapper']'))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='sign-wrapper']"))
         )
         check_in_button.click()
         log_with_time("Check-in button clicked successfully.")
 
         # Wait for the confirmation modal to appear
         modal_close_button = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '[class*=---dialog-close]'))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, '[class*=---dialog-close]'))
         )
         log_with_time("Confirmation modal appeared.")
         
